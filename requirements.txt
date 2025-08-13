@@ -1,0 +1,17 @@
+einops
+auraloss
+wandb 
+
+tensorboard
+scipy
+matplotlib
+tqdm
+torchaudio
+
+soundfile
+torchinfo
+librosa
+pandas
+seaborn
+fvcore
+numpy

@@ -1,0 +1,28 @@
+# Python virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Large data files - DO NOT COMMIT
+# The README should explain where to get this data.
+data/
+
+# Trained models and checkpoints - DO NOT COMMIT
+# The README should link to a downloadable final model.
+trained_models/
+training_runs/
+
+# Generated evaluation outputs - DO NOT COMMIT
+# The code should generate these, not store them.
+evaluation_results/
+
+# Log files and local configs
+*.log
+wandb/
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store
