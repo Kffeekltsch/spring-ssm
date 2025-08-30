@@ -78,8 +78,8 @@ The following examples demonstrate the `GCN_SSM` model's ability to process long
 
 | Category | Audio Player |
 | :--- | :--- |
-| **Long Dry Input Loop** <br> *(e.g., 16 seconds)* | `<audio controls src="audio/long_loop_dry.mp3"></audio>` |
-| **Streaming `GCN_SSM` Output** <br> *(Continuous Processing)* | `<audio controls src="audio/long_loop_GCN_SSM_streaming.mp3"></audio>` |
+| **Long Dry Input Loop** <br> *(e.g., 16 seconds)* | |
+| **Streaming `GCN_SSM` Output** <br> *(Continuous Processing)* |  |
 
 ---
 *For questions, please contact Jonas Janser.*
