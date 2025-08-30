@@ -22,7 +22,9 @@ Modeling analog audio effects like spring reverb is a long-standing challenge du
 
 The diagram below provides a high-level overview of our entire research process, from dataset creation with analog hardware to the final comprehensive evaluation.
 
-![Research Pipeline Diagram](images/methodology.png)
+<p align="center">
+  <img src="images/methodology.png" alt="Research Pipeline Diagram" width="80%">
+</p>
 
 ---
 
@@ -30,7 +32,9 @@ The diagram below provides a high-level overview of our entire research process,
 
 Our research is based on a systematic ablation study of four models built from two primary backbones (a simple dilated stack and a Gated Convolutional Network) and an optional IIR-like SSM refinement stage. The diagram below illustrates the signal flow for each model.
 
-![Model Architectures Diagram](images/models.png)
+<p align="center">
+  <img src="images/models.jpg" alt="Model Architectures Diagram" width="90%">
+</p>
 
 ---
 ## 1. The Sound of the Analog Hardware
