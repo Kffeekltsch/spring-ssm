@@ -65,8 +65,8 @@ As discussed in the paper, a standalone State-Space Model struggles to emulate s
 
 | Category | Audio Player (SSM-Only Model) |
 | :--- | :--- |
-| **Bass-Heavy / Percussive** | `<audio controls src="audio/ssm_only_cluster1_seg2.mp3"></audio>` |
-| **Harmonic / Mid-Range** | `<audio controls src="audio/ssm_only_cluster3_seg44.mp3"></audio>` |
+| **Bass-Heavy / Percussive** | |
+| **Harmonic / Mid-Range** |  |
 
 </details>
 
