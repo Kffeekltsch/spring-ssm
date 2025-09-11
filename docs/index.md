@@ -23,7 +23,7 @@ Modeling analog audio effects like spring reverb is a long-standing challenge du
 The diagram below provides a high-level overview of our entire research process, from dataset creation with analog hardware to the final comprehensive evaluation.
 
 <p align="center">
-  <img src="images/methodology.png" alt="Research Pipeline Diagram" width="50%">
+  <img src="images/methodology.svg" alt="Research Pipeline Diagram" width="50%">
 </p>
 
 ---
@@ -33,7 +33,7 @@ The diagram below provides a high-level overview of our entire research process,
 Our research is based on a systematic ablation study of four models built from two primary backbones (a simple dilated stack and a Gated Convolutional Network) and an optional IIR-like SSM refinement stage. The diagram below illustrates the signal flow for each model.
 
 <p align="center">
-  <img src="images/models.jpg" alt="Model Architectures Diagram" width="50%">
+  <img src="images/models.svg" alt="Model Architectures Diagram" width="50%">
 </p>
 
 ---
@@ -43,61 +43,68 @@ This section demonstrates the fundamental task: transforming a dry input signal 
 
 | Audio Category | Dry Input Signal | Wet Ground Truth (Hardware) |
 | :--- | :--- | :--- |
-| **Bass-Heavy / Percussive** <br> *(From Cluster 1)* | <audio controls src="audio/cluster1_seg2_DRY.mp3"></audio> | <audio controls src="audio/cluster1_seg2_WET.mp3"></audio> |
-| **Harmonic / Mid-Range** <br> *(From Cluster 3)* | <audio controls src="audio/cluster3_seg44_DRY.mp3"></audio> | <audio controls src="audio/cluster3_seg44_WET.mp3"></audio> |
+| **Sample 003** | <audio controls src="audio/references/sample_003_dry_ref.wav"></audio> | <audio controls src="audio/references/sample_003_wet_ref.wav"></audio> |
+| **Sample 008** | <audio controls src="audio/references/sample_008_dry_ref.wav"></audio> | <audio controls src="audio/references/sample_008_wet_ref.wav"></audio> |
 
 ---
 
 ## 2. Full Model Comparison
 
-Here, we compare the performance of all four models from our ablation study against the ground truth. The models are ordered from our main proposal (GCN_SSM) down to the simplest baseline (CONV).
+Here, we compare the performance of all four models from our ablation study against the ground truth. The models are ordered from our main proposal (GCN_SSM) down to the simplest baseline (CONV). Each example includes both waveform visualizations and audio players for comprehensive comparison.
 
-### Example 1: Bass-Heavy / Percussive Material (Cluster 1, Segment 2)
+### Example 1: Sample 003
+
+#### Waveform Comparisons
+
+| Model / Reference | Waveform Visualization |
+| :--- | :--- |
+| **GCN_SSM (Proposed Interleaved)** | <img src="images/gcn-ssm/sample_003_waveforms (3).png" alt="GCN_SSM Sample 003 Waveform" width="100%"> |
+| **GCN (Baseline)** | <img src="images/gcn/sample_003_waveforms (2).png" alt="GCN Sample 003 Waveform" width="100%"> |
+| **CONV_SSM (Sequential Hybrid)** | <img src="images/conv-ssm/sample_003_waveforms.png" alt="CONV_SSM Sample 003 Waveform" width="100%"> |
+| **CONV (Baseline)** | <img src="images/conv/sample_003_waveforms.png" alt="CONV Sample 003 Waveform" width="100%"> |
+
+#### Audio Comparisons
 
 | Model / Reference | Audio Player |
 | :--- | :--- |
-| **Wet Ground Truth** <br> *(Target)* | <audio controls src="audio/cluster1_seg2_WET.mp3"></audio> |
-| **GCN_SSM (Proposed Interleaved)** | <audio controls src="audio/GCN_SSM_cluster1_seg2_4s.mp3"></audio> |
-| **GCN (Baseline)** | <audio controls src="audio/GCN_cluster1_seg2_4s.mp3"></audio> |
-| **CONV_SSM_L (Sequential Hybrid)** | <audio controls src="audio/CONV_SSM_L_cluster1_seg2_4s.mp3"></audio> |
-| **CONV (Baseline)** | <audio controls src="audio/CONV_cluster1_seg2_4s.mp3"></audio> |
+| **Dry Input** | <audio controls src="audio/references/sample_003_dry_ref.wav"></audio> |
+| **Wet Ground Truth** <br> *(Target)* | <audio controls src="audio/references/sample_003_wet_ref.wav"></audio> |
+| **GCN_SSM (Proposed Interleaved)** | <audio controls src="audio/gcn-ssm/sample_003_pred.wav"></audio> |
+| **GCN (Baseline)** | <audio controls src="audio/gcn/sample_003_pred (1).wav"></audio> |
+| **CONV_SSM (Sequential Hybrid)** | <audio controls src="audio/conv-ssm/sample_003_pred (2).wav"></audio> |
+| **CONV (Baseline)** | <audio controls src="audio/conv/sample_003_pred (3).wav"></audio> |
 
-### Example 2: Harmonic / Mid-Range Material (Cluster 3, Segment 44)
+### Example 2: Sample 008
+
+#### Waveform Comparisons
+
+| Model / Reference | Waveform Visualization |
+| :--- | :--- |
+| **GCN-SSM** | <img src="images/gcn-ssm/sample_008_waveforms (3).png" alt="GCN_SSM Sample 008 Waveform" width="100%"> |
+| **GCN** | <img src="images/gcn/sample_008_waveforms (2).png" alt="GCN Sample 008 Waveform" width="100%"> |
+| **CONV-SSM** | <img src="images/conv-ssm/sample_008_waveforms (1).png" alt="CONV_SSM Sample 008 Waveform" width="100%"> |
+| **CONV** | <img src="images/conv/sample_008_waveforms.png" alt="CONV Sample 008 Waveform" width="100%"> |
+
+#### Audio Comparisons
 
 | Model / Reference | Audio Player |
 | :--- | :--- |
-| **Wet Ground Truth** <br> *(Target)* | <audio controls src="audio/cluster3_seg44_WET.mp3"></audio> |
-| **GCN_SSM (Proposed Interleaved)** | <audio controls src="audio/GCN_SSM_cluster3_seg44_172s.mp3"></audio> |
-| **GCN (Baseline)** | <audio controls src="audio/GCN_cluster3_seg44_172s.mp3"></audio> |
-| **CONV_SSM_L (Sequential Hybrid)** | <audio controls src="audio/CONV_SSM_L_cluster3_seg44_172s.mp3"></audio> |
-| **CONV (Baseline)** | <audio controls src="audio/CONV_cluster3_seg44_172s.mp3"></audio> |
+| **Dry Input** | <audio controls src="audio/references/sample_008_dry_ref.wav"></audio> |
+| **Wet Ground Truth** <br> *(Target)* | <audio controls src="audio/references/sample_008_wet_ref.wav"></audio> |
+| **GCN-SSM (Proposed Interleaved)** | <audio controls src="audio/gcn-ssm/sample_008_pred.wav"></audio> |
+| **GCN** | <audio controls src="audio/gcn/sample_008_pred (1).wav"></audio> |
+| **CONV-SSM (Sequential Hybrid)** | <audio controls src="audio/conv-ssm/sample_008_pred (2).wav"></audio> |
+| **CONV** | <audio controls src="audio/conv/sample_008_pred (3).wav"></audio> |
 
----
-
-## 3. Analysis of Standalone SSM Performance (Ablation)
-
-<details>
-<summary><strong>► Click to expand: Hear the artifacts from a non-hybrid SSM model</strong></summary>
-
-As discussed in the paper, a standalone State-Space Model struggles to emulate spring reverb. The following examples, generated by a preliminary SSM-only model, demonstrate the audible "ringing" artifacts and unnaturally fast-collapsing tails that occur when the input signal stops. This motivates our hybrid approach, where a convolutional backbone provides a stable structure for the reverb tail.
-
-| Category | Audio Player (SSM-Only Model) |
-| :--- | :--- |
-| **Bass-Heavy / Percussive** | |
-| **Harmonic / Mid-Range** |  |
-
-</details>
-
----
 
 ## 4. Real-Time Streaming Inference Examples
 
-The following examples demonstrate the GCN_SSM model's ability to process long, continuous audio files. The output was generated using a block-based "streaming" method that simulates a real-time audio plugin (VST/AU), proving its suitability for practical applications.
+The following examples demonstrate the GCN-SSM model's ability to process long, continuous audio files. The output was generated using a block-based "streaming" method that simulates a real-time audio plugin (VST/AU), proving its suitability for practical applications.
 
 | Category | Audio Player |
 | :--- | :--- |
-| **Long Dry Input Loop** <br> *(e.g., 16 seconds)* | |
-| **Streaming GCN_SSM Output** <br> *(Continuous Processing)* |  |
+| **Long Dry Input Loop** <br> *(Continuous audio for streaming test)* | <audio controls src="audio/audio_inference.wav"></audio> |
+| **Streaming GCN-SSM Output** <br> *(Real-time processing simulation)* | <audio controls src="audio/gcn-ssm-stream.wav"></audio> |
 
 ---
 *For questions, please contact Jonas Janser.*
