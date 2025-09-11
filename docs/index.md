@@ -13,9 +13,7 @@ title: "Audio Examples: Hybrid Convolutional State-Space Models for Spring Rever
 
 ## Abstract
 
-Modeling analog audio effects like spring reverb is a long-standing challenge due to their complex and nonlinear behaviors. We propose a hybrid architecture, GCN_SSM, that synergistically combines a Gated Convolutional Network (GCN) backbone with State-Space Model (SSM) layers. This paper demonstrates that our interleaved hybrid model achieves state-of-the-art perceptual quality, confirmed through a systematic ablation study and subjective listening tests (MUSHRA).
-
-*Listeners are encouraged to use headphones for the best experience.*
+Modeling analog audio effects like spring reverbs is a long-standing challenge due to the complex and nonlinear behaviors, such as amplitude-dependent transients and long, dispersive reverberant tails. While deep learning has shown promising results, existing paradigms often struggle to capture these characteristics simultaneously. In this paper we propose \textit{GCN-SSM}, a novel hybrid model architecture, combining a Gated Convolutional Network with interleaved State-Space Models. We evaluate the performance with spectral and time-domain losses, and a subjective listening test (MUSHRA~\cite{webmushra}). We show that both components are critical for achieving state-of-the-art perceptual quality. The \textit{GCN-SSM} with interleaved \gls{ssm} layers outperforms the non-hybrid \gls{gcn} as all our test metrics demonstrate. With only 127.4k parameters and real-time capable inference at 5.9 GFlops/s, the \textit{GCN-SSM} is suitable for practical applications on modern CPUs.
 
 ---
 ## Research Pipeline
