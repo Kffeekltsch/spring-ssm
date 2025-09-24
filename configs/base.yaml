@@ -1,7 +1,7 @@
 # configs/base.yaml
 data:
-  dry_path: "data/dry_audio.wav"
-  wet_path: "data/wet_audio.wav"
+  dry_path: "data/final_dataset/dry_audio_final.wav"
+  wet_path: "data/final_dataset/wet_audio_final.wav"
   sample_rate: 44100
   duration: 4.0
   load_in_memory: true
@@ -10,15 +10,20 @@ output_dir: "training_runs"
 
 training:
   project_name: "spring-reverb-emulation-final"
-  epochs: 250
-  batch_size: 8
+  epochs: 200
+  batch_size: 6
   optimizer:
     type: "AdamW"
-    learning_rate: 4.0e-3
+    learning_rate: 2.0e-3
     weight_decay: 1.0e-4
   scheduler:
     patience: 15
     factor: 0.75
-
+  previews:
+    enable: true               
+    every_n_epochs: 25          
+    num_samples: 1 
+  warmup:
+    epochs: 50
 loss:
   alpha: 0.5

@@ -5,13 +5,11 @@ import torchaudio
 from pathlib import Path
 
 def remove_dc_offset(waveform: torch.Tensor) -> torch.Tensor:
-    """Removes DC offset from a waveform tensor of shape [..., Time]."""
     return waveform - torch.mean(waveform, dim=-1, keepdim=True)
 
 class WavReverbDataset(Dataset):
     """
     Dataset for paired dry/wet audio, supporting two loading modes.
-    This version works entirely with PyTorch Tensors, avoiding NumPy conversions.
     """
     def __init__(self, dry_path: str, wet_path: str, sample_rate: int, duration: float, load_in_memory: bool = False):
         """

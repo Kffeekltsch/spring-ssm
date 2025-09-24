@@ -1,4 +1,4 @@
-# evaluate.py
+
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -9,25 +9,37 @@ import torch
 from torch.utils.data import DataLoader
 import soundfile as sf
 
-# Local module imports from the 'src' directory
 from src.dataset import WavReverbDataset, split_dataset
-from src.losses import TestMetrics
-from src.utils.plotting import save_pcm_plot, save_spectrogram_plot # Assumes this file exists
-
-# Import all models to create a registry (same as in train.py)
+from src.losses import CompositetestLoss
+from src.utils.plotting import save_pcm_plot, save_melspectrogram_plot 
 from src.models.conv import CONV
 from src.models.conv_ssm import CONV_SSM_L
 from src.models.gcn import GCN
 from src.models.gcn_ssm import GCN_SSM
 
-# Model registry to map config names to model classes
+
+
 MODEL_REGISTRY = {
     "CONV": CONV,
     "CONV_SSM_L": CONV_SSM_L,
     "GCN": GCN,
     "GCN_SSM": GCN_SSM,
+ 
 }
 
+def calculate_mag_weighted_phase_error(target_stft, pred_stft, eps=1e-8):
+    """Calculates magnitude-weighted phase error on torch tensors."""
+    target_phase = torch.angle(target_stft)
+    pred_phase = torch.angle(pred_stft)
+    phase_diff = target_phase - pred_phase
+    phase_diff_wrapped = torch.remainder(phase_diff + torch.pi, 2 * torch.pi) - torch.pi
+    abs_phase_error = torch.abs(phase_diff_wrapped)
+    
+    target_mag = torch.abs(target_stft)
+    mag_weights = target_mag / (torch.sum(target_mag) + eps)
+    
+    return torch.sum(abs_phase_error * mag_weights).item()
+    
 
 def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots=False):
     """
@@ -48,14 +60,13 @@ def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots
         save_plots (bool, optional): If True, generate and save plots for each sample.
     """
     
-    # 1. SETUP AND CHECKPOINT LOADING
+    # 1. SETUP AND CHECKPOINT 
     
     ckpt_path = Path(checkpoint_path)
     if not ckpt_path.is_file():
         print(f"Error: Checkpoint file not found at {ckpt_path}")
         return
 
-    # Use the checkpoint's parent directory name to name the output folder
     run_name = ckpt_path.parent.name
     eval_output_dir = Path(output_dir) / run_name
     audio_output_dir = eval_output_dir / "audio"
@@ -68,18 +79,12 @@ def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots
     print(f"Loading checkpoint: {ckpt_path}")
     checkpoint = torch.load(ckpt_path, map_location=device)
     
-    # Load config from the checkpoint itself
+
     config = checkpoint.get('config')
     if not config:
         print("Error: The checkpoint file does not contain a 'config' dictionary.")
-        print("Please retrain the model with the updated train.py script to embed the config.")
         return
     print(f"Checkpoint loaded from epoch {checkpoint.get('epoch', 'N/A')}. Evaluating on {device}.")
-
-    
-    # 2. MODEL AND DATA LOADING
-    
-    # Instantiate model from the config saved in the artifact
     model_name = config['model']['name']
     ModelClass = MODEL_REGISTRY[model_name]
     model = ModelClass(**config['model']['params']).to(device)
@@ -87,12 +92,14 @@ def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots
     model.eval()
     print(f"Model '{model_name}' loaded successfully.")
 
-    # Load test data
+    data_cfg = config['data']
+    duration = data_cfg.get('duration') or data_cfg.get('segment_duration')
     full_dataset = WavReverbDataset(
-        dry_dir=Path(data_dir) / 'dry',
-        wet_dir=Path(data_dir) / 'wet',
+        dry_path=Path(data_dir) / 'dry_audio_final.wav',
+        wet_path=Path(data_dir) / 'wet_audio_final.wav',
         sample_rate=config['data']['sample_rate'],
-        duration=config['data']['segment_duration']
+        duration=duration,
+        load_in_memory=data_cfg.get('load_in_memory', False)
     )
     _, _, test_set = split_dataset(full_dataset)
     
@@ -101,72 +108,80 @@ def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots
     
     test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
     print(f"Evaluating on {len(test_set)} samples from the test set.")
-
-    
-    # 3. EVALUATION LOOP
-    
-    metrics_calculator = TestMetrics(sample_rate=config['data']['sample_rate'], device=device)
+    metrics_calculator = CompositetestLoss(sampling_rate=data_cfg['sample_rate'], device=device)
     results_list = []
+    
 
+    n_fft_phase = 1024
+    hop_length_phase = 256
+    
     pbar = tqdm(enumerate(test_loader), total=len(test_loader), desc=f"Evaluating {run_name}")
     with torch.no_grad():
         for i, (dry_wav, wet_wav) in pbar:
-            original_index = test_loader.dataset.indices[i] if isinstance(test_loader.dataset, torch.utils.data.Subset) else i
-
+            original_index = test_set.indices[i] if isinstance(test_set, torch.utils.data.Subset) else i
             dry_wav, wet_wav = dry_wav.to(device), wet_wav.to(device)
             
-            # Run inference
             pred_wav = model(dry_wav)
+            l1, mrstft, mel, mse, esr = metrics_calculator(pred_wav, wet_wav)
             
-            # Calculate metrics
-            l1, mrstft, mel, mse, esr, dc = metrics_calculator(pred_wav, wet_wav)
+            # Simple Phase Error
+            wet_stft = torch.stft(wet_wav.squeeze(), n_fft=n_fft_phase, hop_length=hop_length_phase, return_complex=True)
+            pred_stft = torch.stft(pred_wav.squeeze(), n_fft=n_fft_phase, hop_length=hop_length_phase, return_complex=True)
+            phase_error = calculate_mag_weighted_phase_error(wet_stft, pred_stft)
             
             results_list.append({
-                'original_sample_index': original_index,
-                'L1': l1.item(),
-                'MRSTFT': mrstft.item(),
-                'MelSpec_Loss': mel.item(),
-                'MSE': mse.item(),
-                'ESR_dB': esr.item(),
-                'DC_Offset': dc.item(),
+                'sample_index': original_index, 'L1': l1.item(), 'MRSTFT': mrstft.item(),
+                'MelSpec_Loss': mel.item(), 'MSE': mse.item(), 'ESR_dB': esr.item(), 
+                'Phase_Error': phase_error
             })
 
-            # --- Save audio files ---
+
             pred_np = pred_wav.squeeze().cpu().numpy()
             dry_np = dry_wav.squeeze().cpu().numpy()
             wet_np = wet_wav.squeeze().cpu().numpy()
 
-            sf.write(audio_output_dir / f"sample_{original_index:03d}_pred.wav", pred_np, config['data']['sample_rate'])
-            sf.write(audio_output_dir / f"sample_{original_index:03d}_dry_ref.wav", dry_np, config['data']['sample_rate'])
-            sf.write(audio_output_dir / f"sample_{original_index:03d}_wet_ref.wav", wet_np, config['data']['sample_rate'])
 
-            # --- Optionally save plots ---
+            sf.write(audio_output_dir / f"sample_{original_index:03d}_pred.wav", pred_np, data_cfg['sample_rate'], subtype='PCM_24')
+            sf.write(audio_output_dir / f"sample_{original_index:03d}_dry_ref.wav", dry_np, data_cfg['sample_rate'], subtype='PCM_24')
+            sf.write(audio_output_dir / f"sample_{original_index:03d}_wet_ref.wav", wet_np, data_cfg['sample_rate'], subtype='PCM_24')
+
             if save_plots:
                 tag = f"sample_{original_index:03d}"
-                # You'd need to implement these plotting functions in src/utils/plotting.py
-                # save_pcm_plot(dry_np, wet_np, pred_np, tag, output_dir=plots_output_dir)
-                # save_spectrogram_plot(dry_np, wet_np, pred_np, config['data']['sample_rate'], tag, output_dir=plots_output_dir)
+                save_pcm_plot(dry_np, wet_np, pred_np, tag, output_dir=plots_output_dir)
+                save_melspectrogram_plot(dry_np, wet_np, pred_np, data_cfg['sample_rate'], tag, output_dir=plots_output_dir)
+
 
     
-    # 4. AGGREGATE AND SAVE RESULTS
+
     
     if not results_list:
         print("No samples were evaluated.")
         return
 
-    # Create and save detailed per-sample results
+    #save per-sample results
     results_df = pd.DataFrame(results_list)
     detailed_csv_path = eval_output_dir / "metrics_per_sample.csv"
     results_df.to_csv(detailed_csv_path, index=False)
-    print(f"\nSaved detailed metrics for {len(results_df)} samples to {detailed_csv_path}")
+    print(f"\nSaved detailed metrics to {detailed_csv_path}")
     
-    # Calculate and save summary statistics
-    summary_df = results_df.mean().to_frame().T.drop(columns=['original_sample_index'])
+
+    summary_metrics = results_df.mean().to_dict()
+    column_order = [
+        'L1',
+        'MRSTFT',
+        'MelSpec_Loss',
+        'MSE',
+        'ESR_dB',
+        'Phase_Error'
+    ]
+    
+    summary_df = pd.DataFrame([summary_metrics], columns=column_order)
+    
     summary_csv_path = eval_output_dir / "metrics_summary.csv"
     summary_df.to_csv(summary_csv_path, index=False)
 
     print("\n--- Evaluation Summary ---")
-    print(summary_df.round(4))
+    print(summary_df.round(4).to_string(index=False))
     print("--------------------------")
     print(f"Evaluation finished. Results saved in: {eval_output_dir}")
 
@@ -182,7 +197,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--data_dir', 
         type=str, 
-        default="data/EVT4500", 
+        default="data", 
         help="Path to the root of the dataset directory containing 'dry' and 'wet' subfolders."
     )
     parser.add_argument(

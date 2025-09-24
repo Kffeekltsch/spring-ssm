@@ -1,0 +1,23 @@
+# Configuration for the standard Gated Convolutional Network (GCN) baseline.
+# This model acts as the backbone for our more complex hybrid models.
+
+model:
+  name: "GCN"
+  params:
+    # These are the standard parameters for your GCN architecture
+    in_ch: 1
+    out_ch: 1
+    n_blocks: 11
+    n_channels: 8
+    dilation_growth: 2
+    kernel_size: 87
+    cond_dim: null # No conditioning is used
+
+# NOTE: We do not need a 'training' section here because this model
+# can use the default "AdamW" optimizer defined in 'configs/base.yaml'.
+# The merge logic will handle this automatically.
+training: # <-- This key is now here
+  optimizer: # <-- Optimizer is now nested inside
+    learning_rate: 2.0e-3
+    core_lr_factor: 0.1
+    other_weight_decay: 0.04

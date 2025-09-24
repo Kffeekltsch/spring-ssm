@@ -1,8 +1,10 @@
+import math
 import torch
 import numpy as np
-from .jax_compat import variance_scaling, lecun_normal, uniform
+# from .jax_compat import variance_scaling, lecun_normal, uniform
 import scipy.linalg
 
+from typing import Optional, Sequence, Literal
 # Initialization Functions
 
 def make_HiPPO(N):
@@ -125,6 +127,25 @@ def make_Normal_HiPPO(N, B=1):
     return torch.tensor(Lambda), torch.tensor(V)
 
 
+def uniform(shape, dtype=torch.float, minval=0., maxval=1.0, device=None):
+    src = torch.rand(shape, dtype=dtype, device=device)
+    if minval == 0 and maxval == 1.:
+        return src
+    else:
+        return (src * (maxval - minval)) + minval
+    
+def _complex_uniform(shape: Sequence[int],
+                     dtype, device=None) -> torch.Tensor:
+    """
+    Sample uniform random values within a disk on the complex plane,
+    with zero mean and unit variance.
+    """
+    r = torch.sqrt(2 * torch.rand(shape, dtype=dtype, device=device))
+    theta = 2 * torch.pi * torch.rand(shape, dtype=dtype, device=device)
+    return r * torch.exp(1j * theta)
+
+
+
 def log_step_initializer(dt_min=0.001, dt_max=0.1):
     """ Initialize the learnable timescale Delta by sampling
          uniformly between dt_min and dt_max.
@@ -164,6 +185,137 @@ def init_log_steps(H, dt_min, dt_max):
 
     return torch.tensor(log_steps)
 
+
+def _compute_fans(shape, fan_in_axes=None):
+    """Computes the number of input and output units for a weight shape."""
+    if len(shape) < 1:
+        fan_in = fan_out = 1
+    elif len(shape) == 1:
+        fan_in = fan_out = shape[0]
+    elif len(shape) == 2:
+        fan_in, fan_out = shape
+    else:
+        if fan_in_axes is not None:
+            # Compute fan-in using user-specified fan-in axes.
+            fan_in = np.prod([shape[i] for i in fan_in_axes])
+            fan_out = np.prod([s for i, s in enumerate(shape)
+                              if i not in fan_in_axes])
+        else:
+            # If no axes specified, assume convolution kernels (2D, 3D, or more.)
+            # kernel_shape: (..., input_depth, depth)
+            receptive_field_size = np.prod(shape[:-2])
+            fan_in = shape[-2] * receptive_field_size
+            fan_out = shape[-1] * receptive_field_size
+    return fan_in, fan_out
+
+
+
+def _complex_truncated_normal(upper: float,
+                              shape: Sequence[int],
+                              dtype, device=None) -> torch.Tensor:
+    """
+    Sample random values from a centered normal distribution on the complex plane,
+    whose modulus is truncated to `upper`, and the variance before the truncation
+    is one.
+    """
+    real_dtype = torch.tensor(0, dtype=dtype).real.dtype
+    t = ((1 - torch.exp(torch.tensor(-(upper ** 2), dtype=dtype, device=device)))
+         * torch.rand(shape, dtype=real_dtype, device=device).type(dtype))
+    r = torch.sqrt(-torch.log(1 - t))
+    theta = 2 * torch.pi * torch.rand(shape, dtype=real_dtype, device=device).type(dtype)
+    return r * torch.exp(1j * theta)
+
+
+def _truncated_normal(lower, upper, shape, dtype=torch.float):
+    if shape is None:
+        shape = torch.broadcast_shapes(np.shape(lower), np.shape(upper))
+
+    sqrt2 = math.sqrt(2)
+    a = math.erf(lower / sqrt2)
+    b = math.erf(upper / sqrt2)
+
+    # a<u<b
+    u = uniform(shape, dtype, minval=a, maxval=b)
+    out = sqrt2 * torch.erfinv(u)
+    # Clamp the value to the open interval (lower, upper) to make sure that
+    # rounding (or if we chose `a` for `u`) doesn't push us outside of the range.
+    with torch.no_grad():
+        return torch.clip(
+            out,
+            torch.nextafter(torch.tensor(lower), torch.tensor(np.inf, dtype=dtype)),
+            torch.nextafter(torch.tensor(upper), torch.tensor(-np.inf, dtype=dtype)))
+
+
+def variance_scaling(scale: float,
+                     mode: Literal["fan_in", "fan_out", "fan_avg"] = 'fan_in',
+                     distribution: Literal["truncated_normal", "normal", "uniform"] = 'truncated_normal',
+                     fan_in_axes: Optional[Sequence[int]] = None,
+                     dtype=torch.float):
+    def init(shape: Sequence[float],
+             dtype=dtype,
+             device=None):
+        fan_in, fan_out = _compute_fans(shape, fan_in_axes)
+       
+        if mode == 'fan_in':
+            denom = max(1, fan_in)
+        elif mode ==  'fan_out':
+            denom = max(1, fan_out)
+        elif mode == 'fan_avg':
+            denom = max(1, (fan_in + fan_out) / 2)
+        else:
+            raise ValueError(f"invalid mode for variance scaling initializer: {mode}")
+
+        variance = scale/denom
+      
+        if distribution == 'normal':
+            return torch.normal(0, np.sqrt(variance), shape, dtype=dtype, device=device)
+        elif distribution == 'uniform':
+            if dtype.is_complex:
+                return _complex_uniform(shape, dtype=dtype, device=device) * np.sqrt(variance)
+            else:
+                return uniform(shape, dtype=dtype, device=device, minval=-1, maxval=1.0) * np.sqrt(3 * variance)
+        elif distribution == 'truncated_normal':
+            if dtype.is_complex:
+                stddev = np.sqrt(variance) * 0.95311164380491208
+                return _complex_truncated_normal(2, shape, dtype=dtype, device=device) * stddev
+            else:
+                stddev = np.sqrt(variance) * 0.87962566103423978
+                return _truncated_normal(-2., 2., shape, dtype=dtype) * stddev
+        else:
+            raise ValueError(f"invalid distribution for variance scaling initializer: {distribution}")
+        
+    return init
+
+def lecun_normal(fan_in_axes=None, dtype=torch.float):
+    """Builds a Lecun normal initializer.
+
+    A `Lecun normal initializer`_ is a specialization of
+    :func:`jax.nn.initializers.variance_scaling` where ``scale = 1.0``,
+    ``mode="fan_in"``, and ``distribution="truncated_normal"``.
+
+    Args:
+    in_axis: axis or sequence of axes of the input dimension in the weights
+      array.
+    out_axis: axis or sequence of axes of the output dimension in the weights
+      array.
+    batch_axis: axis or sequence of axes in the weight array that should be
+      ignored.
+    dtype: the dtype of the weights.
+
+    Returns:
+    An initializer.
+
+    Example:
+
+    >>> import jax, jax.numpy as jnp
+    >>> initializer = jax.nn.initializers.lecun_normal()
+    >>> initializer(jax.random.PRNGKey(42), (2, 3), jnp.float32)  # doctest: +SKIP
+    Array([[ 0.46700746,  0.8414632 ,  0.8518669 ],
+         [-0.61677957, -0.67402434,  0.09683388]], dtype=float32)
+
+    .. _Lecun normal initializer: https://arxiv.org/abs/1706.02515
+    """
+    return variance_scaling(1.0, "fan_in", "truncated_normal", fan_in_axes=fan_in_axes, dtype=dtype)
 
 
 

@@ -1,0 +1,18 @@
+# configs/gcn_ssm.yaml
+model:
+  name: "GCN_SSM"
+  params:
+    in_ch: 1
+    out_ch: 1
+    n_blocks: 11
+    n_channels: 8
+    dilation_growth: 2
+    kernel_size: 87
+    d_state: 24
+
+training: # <-- This key is now here
+  optimizer: # <-- Optimizer is now nested inside
+    type: "differential"
+    learning_rate: 2.0e-3
+    core_lr_factor: 0.1
+    other_weight_decay: 0.04

@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 import torch.profiler
-from ssm.model import SequenceLayer
+
 
 from custom_layers import (
     Conv1dCausal,
@@ -117,7 +117,7 @@ class GCN(nn.Module):
         n_channels: int = 32,
         dilation_growth: int = 8,
         kernel_size: int = 3,
-        cond_dim: int = 3,
+        cond_dim: int = 0,
     ) -> None:
         super().__init__()
         self.in_ch = in_ch  # input channels

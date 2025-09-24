@@ -1,0 +1,16 @@
+model:
+  name: "CONV_SSM_L"
+  params:
+    in_ch: 1
+    out_ch: 1
+    num_layers: 15
+    n_channels: 8
+    kernel_size: 12
+    # --- SSM Specific Parameters ---
+    d_state: 16
+training: # <-- This key is now here
+  optimizer: # <-- Optimizer is now nested inside
+    type: "differential"
+    learning_rate: 2.0e-3
+    core_lr_factor: 0.1
+    other_weight_decay: 0.04

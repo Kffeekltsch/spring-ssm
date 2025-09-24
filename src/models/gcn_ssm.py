@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 import torch.profiler
-from ssm.model import SequenceLayer
+from ssm.src.model.sequence_layer import SequenceLayer 
 
 from custom_layers import (
     Conv1dCausal,
@@ -67,27 +67,14 @@ class GCNBlock(nn.Module):
         self.res = nn.Conv1d(
             in_channels=in_ch, out_channels=out_ch, kernel_size=(1,), bias=False
         )
-
-
-        #self.lin = nn.Linear(inter_size*8, out_ch)
-
         
-        
-        #self.ssm_layers = nn.Sequential(*layers)
     def forward(self, x): #cond
         x_in = x
-        x = self.conv(x)  # Apply causal convolution
-        
-        #if self.film is not None:  # Apply FiLM if conditional input is given
-         #   x = self.film(x, cond)
-        x = self.gated_activation(x)  # Apply gated activation function
-        
-        x_res = self.res(x_in)  # Apply residual convolution
+        x = self.conv(x)  
+        x = self.gated_activation(x) 
+        x_res = self.res(x_in)  
         x = x + x_res
-        #x = x.permute(0,2,1)
-        #x = self.ssm_layers(x) # Apply residual connection
-        #x = self.lin(x)
-        #x = x.permute(0,2,1)
+
         return x
 
 
@@ -115,7 +102,8 @@ class GCN_SSM(nn.Module):
         n_channels: int = 32,
         dilation_growth: int = 8,
         kernel_size: int = 3,
-        cond_dim: int = 3,
+        d_state: int = 32,
+        cond_dim: int = 0,
     ) -> None:
         super().__init__()
         self.in_ch = in_ch  # input channels
@@ -139,6 +127,7 @@ class GCN_SSM(nn.Module):
         # Create a list of GCN blocks
         self.blocks = nn.ModuleList()
         block_out_ch = None
+        
 
         for idx, (curr_out_ch, dil, stride) in enumerate(
             zip(self.channels, self.dilations, self.strides)
@@ -163,14 +152,14 @@ class GCN_SSM(nn.Module):
                 SequenceLayer(
                     d_in=block_out_ch,
                     d_out=block_out_ch,
-                    d_state=32,
-                    input_bias=True,
-                    output_bias=True,
+                    d_state=d_state,
+                    input_bias=False,
+                    output_bias=False,
                     complex_input = False,
                     complex_output=False,
-                    trainable_SkipLayer=False, #new
-                    act="prelu",
-                    pre_conv = True
+                    trainable_SkipLayer=True, #new
+                    act="Hardtanh"
+         
                 )
             )
 
@@ -184,6 +173,7 @@ class GCN_SSM(nn.Module):
         self.af = TanhAF()
 
     def forward(self, x): #cond
+        
         # x.shape = (batch_size, in_ch, samples)
         # cond.shape = (batch_size, cond_dim)
         x = x.permute(0,2,1)
@@ -203,14 +193,33 @@ class GCN_SSM(nn.Module):
         x = x.permute(0,2,1)
         return x
 
+    def get_trainable_parameters(self):
+        """Calculates the total number of trainable parameters."""
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+    def get_manual_macs(self, sequence_length):
+        """
+        Calculates the MACs for the SSM part of the model by calling the
+        analytical MACs function of each SequenceLayer.
+        """
+        total_macs = 0
+        
+
+        for module in self.blocks:
+
+            if "SequenceLayer" in module.__class__.__name__:
+                macs_per_step = module.get_number_of_MACs()
+                total_macs += macs_per_step * sequence_length
+
+        return total_macs
     def calc_receptive_field(self) -> int:
         """Compute the receptive field in samples.
 
         Returns:
             int: The receptive field of the model.
         """
-        assert all(_ == 1 for _ in self.strides)  # TODO(cm): add support for dsTCN
-        assert self.dilations[0] == 1  # TODO(cm): add support for >1 starting dilation
+        assert all(_ == 1 for _ in self.strides) 
+        assert self.dilations[0] == 1 
         rf = self.kernel_size
         for dil in self.dilations[1:]:
             rf = rf + ((self.kernel_size - 1) * dil)
