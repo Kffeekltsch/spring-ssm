@@ -1,0 +1,39 @@
+# Phase 4: Full complexity — chirps, noise, steps, AM/FM, everything
+# Compare analytical vs learned decoder here.
+
+run_name: "codec-phase4-learned"
+project_name: "ssm-codec"
+output_dir: "codec/runs"
+use_wandb: false
+
+data:
+  phase: 4
+  segment_length: 1600
+  sample_rate: 16000
+  n_train: 16000
+  n_val: 2000
+  n_test: 2000
+
+model:
+  d_state: 64
+  d_hidden: 32
+  n_encoder_layers: 3
+  n_decoder_layers: 2
+  n_vq_stages: 8
+  n_vq_codes: 512
+  commitment_cost: 0.25
+  decoder_type: "learned"    # S5 refinement on top of analytical
+
+training:
+  epochs: 200
+  batch_size: 32
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  warmup_epochs: 10
+  scheduler_patience: 20
+  scheduler_factor: 0.5
+
+loss:
+  alpha_spectral: 1.0
+  alpha_vq: 0.1
+  alpha_eigenvalue_spread: 0.005

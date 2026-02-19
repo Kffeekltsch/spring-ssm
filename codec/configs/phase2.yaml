@@ -1,0 +1,39 @@
+# Phase 2: Sum of sinusoids — test superposition
+# Each eigenvalue pair should claim one frequency component.
+
+run_name: "codec-phase2-analytical"
+project_name: "ssm-codec"
+output_dir: "codec/runs"
+use_wandb: false
+
+data:
+  phase: 2
+  segment_length: 1600
+  sample_rate: 16000
+  n_train: 10000
+  n_val: 1000
+  n_test: 1000
+
+model:
+  d_state: 16            # more channels for multiple sines
+  d_hidden: 16
+  n_encoder_layers: 2
+  n_decoder_layers: 1
+  n_vq_stages: 4
+  n_vq_codes: 512
+  commitment_cost: 0.25
+  decoder_type: "analytical"
+
+training:
+  epochs: 100
+  batch_size: 64
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  warmup_epochs: 5
+  scheduler_patience: 15
+  scheduler_factor: 0.5
+
+loss:
+  alpha_spectral: 1.0
+  alpha_vq: 0.1
+  alpha_eigenvalue_spread: 0.01
