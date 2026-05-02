@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # =============================================================================
-# Master Training Script for Spring Reverb Paper
-
 # USAGE:chmod +x run_training.sh -> ./run_training.sh
 # =============================================================================
 
@@ -28,7 +26,7 @@ MODELS_TO_TRAIN=(
 set -e 
 
 echo "================================================="
-echo "🚀 Starting Master Training Run"
+echo "Starting Master Training Run"
 echo "Experiment Group: ${EXPERIMENT_GROUP}"
 echo "================================================="
 
@@ -52,11 +50,11 @@ for config_file in "${MODELS_TO_TRAIN[@]}"; do
         --run_name "${run_name}" \
 
         
-    echo "✅ Finished training for ${model_name}."
+    echo "Finished training for ${model_name}."
 done
 
 echo ""
 echo "================================================="
-echo "🎉 All training runs completed successfully!"
+echo "All training runs completed successfully!"
 echo "Check your results under the group '${EXPERIMENT_GROUP}' in wandb."
 echo "================================================="

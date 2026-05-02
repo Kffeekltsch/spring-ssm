@@ -7,11 +7,15 @@ We provide the code for our models (GCN_SSM, etc.), training and evaluation scri
 ## Setup
 
 1.  **Clone the repository:**
-
+    ```bash
+    git clone https://github.com/your-username/spring-ssm.git
+    cd spring-ssm
+    ```
 
 2.  **Install dependencies:**
     ```bash
     pip install -r requirements.txt
+    pip install -e .
     ```
 
 ## Dataset
@@ -33,6 +37,7 @@ python train.py --config configs/gcn_ssm.yaml --run_name "GCN_SSM_first_run" --n
 **Batch Training with Shell Script:**
 For training multiple models sequentially, use the provided shell script:
 ```bash
+cd scripts
 chmod +x run_training.sh
 ./run_training.sh
 ```
@@ -43,12 +48,13 @@ Edit the `MODELS_TO_TRAIN` array in `run_training.sh` to select which models to 
 ### Model Evaluation
 Evaluate a trained model on the test set:
 ```bash
-python evaluate.py --checkpoint final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth --data_dir data/EVT4500 --output_dir evaluation_results --save_plots
+python scripts/evaluate.py --checkpoint final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth --data_dir data --output_dir evaluation_results --save_plots
 ```
 
 **Batch Evaluation with Shell Script:**
 To evaluate all models in the `final_checkpoints/` directory:
 ```bash
+cd scripts
 chmod +x eval.sh
 ./eval.sh
 ```
@@ -59,12 +65,12 @@ This will generate a summary CSV file with metrics for all models.
 ### Single Audio File Inference
 Process a single audio file using a trained model:
 ```bash
-python inference.py <checkpoint_path> <input_audio> <output_audio>
+python scripts/inference.py <checkpoint_path> <input_audio> <output_audio>
 ```
 
 **Example:**
 ```bash
-python inference.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth audio_inference.wav gcn-ssm-stream.wav
+python scripts/inference.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth audio_inference.wav gcn-ssm-stream.wav
 ```
 
 **Optional parameters:**
@@ -74,12 +80,12 @@ python inference.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth audio
 ### Streaming Inference
 For real-time, block-based processing simulation:
 ```bash
-python streaming_inference.py <checkpoint_path> <input_audio> <output_audio>
+python scripts/streaming_inference.py <checkpoint_path> <input_audio> <output_audio>
 ```
 
 **Example:**
 ```bash
-python streaming_inference.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth audio_inference.wav gcn-ssm-stream-realtime.wav
+python scripts/streaming_inference.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth audio_inference.wav gcn-ssm-stream-realtime.wav
 ```
 
 This processes audio in chunks to simulate real-time processing with proper state management.
@@ -99,13 +105,13 @@ The repository includes several pre-trained models in `final_checkpoints/`:
 ### Measuring Model Complexity
 Calculate FLOPs and parameters for any model:
 ```bash
-python measure_flops.py --config configs/gcn_ssm.yaml
+python scripts/measure_flops.py --config configs/gcn_ssm.yaml
 ```
 
 ### Real-Time Factor (RTF) Analysis
 Measure processing speed relative to real-time:
 ```bash
-python rtf.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth
+python scripts/rtf.py final_checkpoints/gcn-ssm-baseline/checkpoint_best.pth
 ```
 
 ## File Structure

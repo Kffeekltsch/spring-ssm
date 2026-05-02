@@ -6,14 +6,14 @@ title: "Audio Examples: Hybrid Convolutional State-Space Models for Spring Rever
 
 **Author:** Jonas Janser
 
-**[📜 Link to Paper (arXiv)]()** <!-- TODO: Add link to your paper when available -->
-| **[💻 Link to Code (GitHub)](https://github.com/Kffeekltsch/spring-ssm)**
+**[Link to Paper (arXiv)]()** <!-- TODO: Add link to your paper when available -->
+| **[Link to Code (GitHub)](https://github.com/Kffeekltsch/spring-ssm)**
 
 ---
 
 ## Abstract
 
-Modeling analog audio effects like spring reverbs is a long-standing challenge due to the complex and nonlinear behaviors, such as amplitude-dependent transients and long, dispersive reverberant tails. While deep learning has shown promising results, existing paradigms often struggle to capture these characteristics simultaneously. In this paper we propose \textit{GCN-SSM}, a novel hybrid model architecture, combining a Gated Convolutional Network with interleaved State-Space Models. We evaluate the performance with spectral and time-domain losses, and a subjective listening test (MUSHRA~\cite{webmushra}). We show that both components are critical for achieving state-of-the-art perceptual quality. The \textit{GCN-SSM} with interleaved \gls{ssm} layers outperforms the non-hybrid \gls{gcn} as all our test metrics demonstrate. With only 127.4k parameters and real-time capable inference at 5.9 GFlops/s, the \textit{GCN-SSM} is suitable for practical applications on modern CPUs.
+Modeling analog audio effects like spring reverbs is a long-standing challenge due to the complex and nonlinear behaviors, such as amplitude-dependent transients and long, dispersive reverberant tails. While deep learning has shown promising results, existing paradigms often struggle to capture these characteristics simultaneously. In this paper we propose GCN-SSM, a novel hybrid model architecture, combining a Gated Convolutional Network with interleaved State-Space Models. We evaluate the performance with spectral and time-domain losses, and a subjective listening test (MUSHRA). We show that both components are critical for achieving state-of-the-art perceptual quality. The GCN-SSM with interleaved ssm layers outperforms the non-hybrid GCN as all our test metrics demonstrate. With only 127.4k parameters and real-time capable inference at 5.9 GFlops/s, the GCN-SSM is suitable for practical applications on modern CPUs.
 
 ---
 ## Research Pipeline

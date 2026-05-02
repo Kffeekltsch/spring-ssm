@@ -122,7 +122,7 @@ def evaluate(checkpoint_path, data_dir, output_dir, num_samples=None, save_plots
             dry_wav, wet_wav = dry_wav.to(device), wet_wav.to(device)
             
             pred_wav = model(dry_wav)
-            l1, mrstft, mel, mse, esr = metrics_calculator(pred_wav, wet_wav)
+            l1, mrstft, mel, mse, esr, _ = metrics_calculator(pred_wav, wet_wav)
             
             # Simple Phase Error
             wet_stft = torch.stft(wet_wav.squeeze(), n_fft=n_fft_phase, hop_length=hop_length_phase, return_complex=True)

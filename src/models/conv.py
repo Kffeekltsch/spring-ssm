@@ -10,11 +10,15 @@ import torch as torch
 import torch.nn as nn
 import torch.nn.functional as F
 import wandb
-from custom_layers import Conv1dCausal, GatedAF
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from src.models.custom_layers import (
+    Conv1dCausal,
+    FiLM,
+    GatedAF,
+    TanhAF,
+)
 
 class Conv1D(nn.Module):
     """

@@ -12,7 +12,7 @@ import wandb
 import torch.profiler
 from ssm.src.model.sequence_layer import SequenceLayer 
 
-from custom_layers import (
+from src.models.custom_layers import (
     Conv1dCausal,
     FiLM,
     GatedAF,

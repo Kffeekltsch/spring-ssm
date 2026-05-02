@@ -1,8 +1,14 @@
 import torch
 import torch.nn as nn
 from ssm.src.model.sequence_layer import SequenceLayer 
-from custom_layers import Conv1dCausal
 from src.models.conv import ShallowFusion 
+from src.models.custom_layers import (
+    Conv1dCausal,
+    FiLM,
+    GatedAF,
+    TanhAF,
+)
+
 
 class CONV_SSM_L(nn.Module):
     """
