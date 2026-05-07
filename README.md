@@ -95,7 +95,7 @@ This processes audio in chunks to simulate real-time processing with proper stat
 The repository includes several pre-trained models in `final_checkpoints/`:
 - `conv-baseline/`: Convolutional baseline model
 - `conv-ssm-baseline/`: Convolutional model with SSM layers
-- `gcn-baseline/`: Graph Convolutional Network baseline
+- `gcn-baseline/`: Gated Convolutional Network baseline (Implementation taken from Papaleo et. al)
 - `gcn-optimized/`: Optimized GCN model
 - `gcn-ssm-baseline/`: Hybrid GCN-SSM baseline model
 - `gcn-ssm-optimized/`: Optimized hybrid GCN-SSM model
