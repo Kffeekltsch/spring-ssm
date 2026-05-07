@@ -3,7 +3,8 @@
 This repository contains the official PyTorch implementation for the paper "Hybrid Convolutional State-Space Models for Spring Reverb Emulation".
 
 We provide the code for our models (GCN_SSM, etc.), training and evaluation scripts, and a pretrained model checkpoint.
-
+For the SSM/S-Edge implementation please refer to the updated version under: https://github.com/embedded-machine-learning/S-Edge
+For the original GCN implementation refer to: https://github.com/francescopapaleo/neural-audio-spring-reverb
 ## Setup
 
 1.  **Clone the repository:**
