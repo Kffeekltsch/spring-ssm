@@ -6,8 +6,8 @@ title: "Audio Examples: Hybrid Convolutional State-Space Models for Spring Rever
 
 **Author:** Jonas Janser
 
-**[Link to Paper (arXiv)]()** <!-- TODO: Add link to your paper when available -->
-| **[Link to Code (GitHub)](https://github.com/Kffeekltsch/spring-ssm)**
+
+**[Link to Code (GitHub)](https://github.com/Kffeekltsch/spring-ssm)**
 
 ---
 
